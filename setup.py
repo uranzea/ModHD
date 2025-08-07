@@ -9,7 +9,6 @@ setup(
         "pandas",
         "matplotlib",
         "notebook",
-        "tk",
         "nbformat"
     ],
 )

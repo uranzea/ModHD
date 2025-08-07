@@ -5,6 +5,11 @@ import pandas as pd
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
+from pathlib import Path
+import sys
+
+# Ensure the package is importable when running this script directly
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from tank_model import TankModel, ModelConfig
 from tank_model.parameters import Parameters
@@ -65,3 +70,5 @@ class App(tk.Tk):
 
 if __name__ == "__main__":
     App().mainloop()
+
+
