@@ -60,7 +60,7 @@ Con ellos se ejecuta una simulación básica y se calibra el modelo con `calibra
 
 ## PET — Cenicafé
 [No verificado] Se incluye una forma empírica tipo Cenicafé: **PET = a · (Tmedia + b) · Rs**, con `a=0.0135` y `b=17.78` por defecto. 
-Ajusta `a`/`b` según calibración local y literatura específica para tu altitud y zona. Si tienes la referencia oficial que usas en EPM, indícala y actualizo la fórmula exacta.
+Ajusta `a`/`b` según calibración local y literatura específica para tu altitud y zona. Si cuentas con la referencia oficial para tu región de interés, indícala y actualizo la fórmula exacta.
 
 ## GUI
 La interfaz requiere [Tkinter](https://docs.python.org/3/library/tkinter.html), que no se instala vía `pip`.
