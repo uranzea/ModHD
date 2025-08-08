@@ -4,6 +4,7 @@
 Modelo hidrológico modular tipo "tanques" (3 compartimentos + enrutamiento Nash) para series horarias o diarias.
 - Unidades internas de **mm** (almacenamientos y flujos).
 - Entrada mínima: fecha, **P_mm**, **PET_mm** (se puede poner PET_mm=0).
+- Las columnas **P_mm** y **PET_mm** con valores `NaN` o negativos se reemplazan mediante interpolación lineal y se indica cuántos datos fueron corregidos.
 - Salida: dataframe con caudales y particiones; conversión a m³/s vía `to_discharge()`.
 
 ## Estructura
