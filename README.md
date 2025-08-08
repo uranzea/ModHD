@@ -7,6 +7,13 @@ Modelo hidrológico modular tipo "tanques" (3 compartimentos + enrutamiento Nash
 - Las columnas **P_mm** y **PET_mm** con valores `NaN` o negativos se reemplazan mediante interpolación lineal y se indica cuántos datos fueron corregidos.
 - Salida: dataframe con caudales y particiones; conversión a m³/s vía `to_discharge()`.
 
+Nuevas funcionalidades:
+- Soporte ampliado de **PET** para conjuntos de datos con temperatura, radiación y métodos empíricos (p. ej. Hamon, Hargreaves).
+- Módulos de calibración (`tank_model/calibration.py`) con búsqueda aleatoria y registro en `logs/`.
+- Utilidades de **IO** (`tank_model/io.py`) para carga, partición y etiquetado de series.
+- Interfaz gráfica (`scripts/gui_app.py`) basada en Tkinter/Matplotlib *(requiere `python3-tk`)*.
+- Ejemplo de uso reproducible y calibración en `scripts/example_run.py`.
+
 ## Estructura
 ```
 tank_model/
@@ -52,8 +59,8 @@ Con ellos se ejecuta una simulación básica y se calibra el modelo con `calibra
 
 
 ## PET — Cenicafé
-[No verificado] Se incluye una forma empírica tipo Cenicafé: **PET = a · (Tmedia + b) · Rs**, con `a=0.0135` y `b=17.78` por defecto. 
-Ajusta `a`/`b` según calibración local y literatura específica para tu altitud y zona. Si tienes la referencia oficial que usas en EPM, indícala y actualizo la fórmula exacta.
+[No verificado] Se incluye una forma empírica tipo Cenicafé: **PET = a · (Tmedia + b) · Rs**, con `a=0.0135` y `b=17.78` por defecto.
+Ajusta `a`/`b` según calibración local y literatura específica para tu altitud y zona.
 
 ## GUI
 La interfaz requiere [Tkinter](https://docs.python.org/3/library/tkinter.html), que no se instala vía `pip`.
@@ -64,7 +71,7 @@ Ejecuta:
 python scripts/gui_app.py
 ```
 - Pestañas: (1) Datos & IO, (2) Parámetros, (3) Evapotranspiración, (4) Simulación, (5) Análisis seco/húmedo
-- Gráfico integrado a la derecha que se actualiza según la pestaña.
+- Gráfico integrado a la derecha que cambia según la pestaña activa.
 
 ## Notebook
 `notebooks/calibracion_y_analisis.ipynb` con flujo reproducible: IO → PET → simulación → análisis seco/húmedo → métricas.
