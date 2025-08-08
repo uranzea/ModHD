@@ -7,6 +7,13 @@ Modelo hidrológico modular tipo "tanques" (3 compartimentos + enrutamiento Nash
 - Las columnas **P_mm** y **PET_mm** con valores `NaN` o negativos se reemplazan mediante interpolación lineal y se indica cuántos datos fueron corregidos.
 - Salida: dataframe con caudales y particiones; conversión a m³/s vía `to_discharge()`.
 
+Nuevas funcionalidades:
+- Soporte ampliado de **PET** para conjuntos de datos con temperatura, radiación y métodos empíricos (p. ej. Hamon, Hargreaves).
+- Módulos de calibración (`tank_model/calibration.py`) con búsqueda aleatoria y registro en `logs/`.
+- Utilidades de **IO** (`tank_model/io.py`) para carga, partición y etiquetado de series.
+- Interfaz gráfica (`scripts/gui_app.py`) basada en Tkinter/Matplotlib *(requiere `python3-tk`)*.
+- Ejemplo de uso reproducible y calibración en `scripts/example_run.py`.
+
 ## Estructura
 ```
 tank_model/
