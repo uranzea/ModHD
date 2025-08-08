@@ -1,13 +1,17 @@
 
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
 from tank_model import TankModel, ModelConfig
 from tank_model.parameters import Parameters
 from tank_model.calibration import random_search
 
-# 1) Carga forcing (ejemplo sintético diario 1 año)
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+
+# 1) Carga forcing (usa ejemplo si existe, o genera sintético)
 try:
-    df = pd.read_csv("../data/example_forcing.csv", parse_dates=["date"], index_col="date")
+    df = pd.read_csv(DATA_DIR / "example_forcing.csv", parse_dates=["date"], index_col="date")
 except FileNotFoundError:
     idx = pd.date_range("2020-01-01", periods=365, freq="D")
     rng = np.random.default_rng(123)
@@ -28,8 +32,12 @@ m = make_model(params)
 sim = m.run(df)
 print(sim.head())
 
-# 5) Ejemplo de calibración con datos observados (aquí, falso obs = sim + ruido)
-q_obs = sim["Q_m3s"].values * (1 + np.random.normal(0, 0.1, size=len(sim)))
+# 5) Calibración con datos observados
+try:
+    df_q = pd.read_csv(DATA_DIR / "example_discharge.csv", parse_dates=["date"], index_col="date")
+    q_obs = df_q.reindex(sim.index)["Qobs_m3s"].values
+except FileNotFoundError:
+    q_obs = sim["Q_m3s"].values * (1 + np.random.normal(0, 0.1, size=len(sim)))
 best_p, best_score = random_search(make_model, df, q_obs, n_iter=50, seed=7)
 print("Mejor NSE:", best_score)
 print("Parámetros calibrados:", best_p)
@@ -37,5 +45,6 @@ print("Parámetros calibrados:", best_p)
 # 6) Re-simular con parámetros calibrados
 m2 = make_model(best_p)
 sim2 = m2.run(df)
-sim2.to_csv("../data/simulation_output.csv")
-print("Guardado: ../data/simulation_output.csv")
+out_file = DATA_DIR / "simulation_output.csv"
+sim2.to_csv(out_file)
+print(f"Guardado: {out_file}")
