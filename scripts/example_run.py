@@ -44,7 +44,17 @@ try:
     q_obs = df_q.reindex(sim.index)["Qobs_m3s"].values
 except FileNotFoundError:
     q_obs = sim["Q_m3s"].values * (1 + np.random.normal(0, 0.1, size=len(sim)))
-best_p, best_score = random_search(make_model, df, q_obs, n_iter=50, seed=7)
+
+best_p, best_score = random_search(
+    make_model,
+    df,
+    q_obs,
+    n_iter=50,
+    seed=7,
+    catchment_name="Rio_concepto",
+    log_path="logs/calibraciones.csv",
+)
+
 print("Mejor NSE:", best_score)
 print("Parámetros calibrados:", best_p)
 
