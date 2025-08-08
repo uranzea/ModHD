@@ -85,6 +85,12 @@ class TankModel:
         for c in cols:
             if c not in df.columns:
                 raise ValueError(f"Falta columna {c}")
+        # Reemplazar valores NaN o negativos mediante interpolación
+        invalid_mask = df[cols].isna() | (df[cols] < 0)
+        invalid_count = int(invalid_mask.sum().sum())
+        if invalid_count > 0:
+            df[cols] = df[cols].mask(invalid_mask).interpolate(limit_direction="both")
+            print(f"Se interpolaron {invalid_count} valores inválidos en P_mm/PET_mm.")
         out = []
         for i in range(len(df)):
             rec = self.step(df.iloc[i]["P_mm"], df.iloc[i]["PET_mm"])
