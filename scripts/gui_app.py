@@ -57,6 +57,41 @@ class App(tk.Tk):
         self.entry_path.grid(row=1, column=0, sticky="ew", padx=2, pady=2)
         btn_browse.grid(row=1, column=1, padx=5)
 
+    def _tab_param(self):
+        tab = ttk.Frame(self.nb); self.nb.add(tab, text="2) Parámetros")
+        frm = ttk.Frame(tab, padding=10); frm.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frm, text="Parámetros del modelo").grid(row=0, column=0, columnspan=2, sticky="w")
+        ttk.Label(frm, text="A1").grid(row=1, column=0, sticky="e")
+        ttk.Entry(frm, width=10).grid(row=1, column=1, padx=2, pady=2, sticky="w")
+        ttk.Label(frm, text="B1").grid(row=2, column=0, sticky="e")
+        ttk.Entry(frm, width=10).grid(row=2, column=1, padx=2, pady=2, sticky="w")
+
+    def _tab_pet(self):
+        tab = ttk.Frame(self.nb); self.nb.add(tab, text="3) PET")
+        frm = ttk.Frame(tab, padding=10); frm.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frm, text="Método de PET").grid(row=0, column=0, sticky="w")
+        methods = [("Columna CSV", "column"), ("Hamon", "hamon"), ("Hargreaves", "hargreaves")]
+        for i, (txt, val) in enumerate(methods, start=1):
+            ttk.Radiobutton(frm, text=txt, variable=self.pet_method, value=val).grid(row=i, column=0, sticky="w")
+
+    def _tab_sim(self):
+        tab = ttk.Frame(self.nb); self.nb.add(tab, text="4) Simulación")
+        frm = ttk.Frame(tab, padding=10); frm.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Button(
+            frm,
+            text="Ejecutar simulación",
+            command=lambda: messagebox.showinfo("Simulación", "No implementada"),
+        ).grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+    def _tab_analisis(self):
+        tab = ttk.Frame(self.nb); self.nb.add(tab, text="5) Análisis")
+        frm = ttk.Frame(tab, padding=10); frm.pack(fill=tk.BOTH, expand=True)
+
+        ttk.Label(frm, text="Resultados de análisis aparecerán aquí").pack(anchor="w")
+
     def _browse_csv(self):
         path = filedialog.askopenfilename(filetypes=[("CSV","*.csv"), ("All","*.*")])
         if not path: return
