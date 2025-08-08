@@ -7,6 +7,10 @@ Modelo hidrológico modular tipo "tanques" (3 compartimentos + enrutamiento Nash
 - Las columnas **P_mm** y **PET_mm** con valores `NaN` o negativos se reemplazan mediante interpolación lineal y se indica cuántos datos fueron corregidos.
 - Salida: dataframe con caudales y particiones; conversión a m³/s vía `to_discharge()`.
 
+Al construir `ModelConfig` es obligatorio especificar el área real de la cuenca
+en kilómetros cuadrados mediante `area_km2`; no se asume un valor por defecto y
+se lanzará una excepción si permanece en `1.0`.
+
 Nuevas funcionalidades:
 - Soporte ampliado de **PET** para conjuntos de datos con temperatura, radiación y métodos empíricos (p. ej. Hamon, Hargreaves).
 - Módulos de calibración (`tank_model/calibration.py`) con búsqueda aleatoria y registro en `logs/`.

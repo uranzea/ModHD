@@ -8,9 +8,15 @@ from .routing import nash_cascade
 
 @dataclass
 class ModelConfig:
+    area_km2: float            # para conversión a m3/s
     dt_hours: float = 24.0     # 1 día por defecto
-    area_km2: float = 1.0      # para conversión a m3/s (opcional)
     route: bool = True         # aplicar Nash en la salida
+
+    def __post_init__(self):
+        if self.area_km2 == 1.0:
+            raise ValueError(
+                "Debe proporcionar el área real en km² al construir ModelConfig."
+            )
 
 class TankModel:
     def __init__(self, params: Parameters, config: ModelConfig, init_states: States = None):

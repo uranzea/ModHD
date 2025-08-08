@@ -25,7 +25,7 @@ def test_mass_conservation_when_s0_insufficient():
         alpha=1.0,
         beta=1.0,
     )
-    cfg = ModelConfig(route=False)
+    cfg = ModelConfig(area_km2=1.5, route=False)
     init_states = States(S0=10.0)
     model = TankModel(params, cfg, init_states)
 
