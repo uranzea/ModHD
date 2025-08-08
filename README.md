@@ -42,7 +42,12 @@ Enrutamiento: **Nash** con parámetros `n_r` (entero ≥1) y `k_r` (horas o día
 ```bash
 python scripts/example_run.py
 ```
-Edita parámetros en `example_run.py` o calibra con `calibration.random_search()`.
+Este script carga los archivos de ejemplo ubicados en `data/`:
+
+- `example_forcing.csv`: precipitación y evapotranspiración.
+- `example_discharge.csv`: caudales observados.
+
+Con ellos se ejecuta una simulación básica y se calibra el modelo con `calibration.random_search()`. Puedes reemplazar estos CSV por tus propias series para correr y calibrar el modelo con tus datos.
 
 
 ## PET — Cenicafé

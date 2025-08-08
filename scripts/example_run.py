@@ -1,6 +1,5 @@
 
 from pathlib import Path
-import sys
 import pandas as pd
 import numpy as np
 
@@ -17,6 +16,7 @@ data_dir = ROOT / "data"
 forcing_path = data_dir / "example_forcing.csv"
 try:
     df = pd.read_csv(forcing_path, parse_dates=["date"], index_col="date")
+
 except FileNotFoundError:
     idx = pd.date_range("2020-01-01", periods=365, freq="D")
     rng = np.random.default_rng(123)
@@ -37,8 +37,12 @@ m = make_model(params)
 sim = m.run(df)
 print(sim.head())
 
-# 5) Ejemplo de calibración con datos observados (aquí, falso obs = sim + ruido)
-q_obs = sim["Q_m3s"].values * (1 + np.random.normal(0, 0.1, size=len(sim)))
+# 5) Calibración con datos observados
+try:
+    df_q = pd.read_csv(DATA_DIR / "example_discharge.csv", parse_dates=["date"], index_col="date")
+    q_obs = df_q.reindex(sim.index)["Qobs_m3s"].values
+except FileNotFoundError:
+    q_obs = sim["Q_m3s"].values * (1 + np.random.normal(0, 0.1, size=len(sim)))
 best_p, best_score = random_search(make_model, df, q_obs, n_iter=50, seed=7)
 print("Mejor NSE:", best_score)
 print("Parámetros calibrados:", best_p)
@@ -46,9 +50,9 @@ print("Parámetros calibrados:", best_p)
 # 6) Re-simular con parámetros calibrados
 m2 = make_model(best_p)
 sim2 = m2.run(df)
+
 output_path = data_dir / "simulation_output.csv"
 output_path.parent.mkdir(parents=True, exist_ok=True)
 sim2.to_csv(output_path)
 print(f"Guardado: {output_path}")
-
 
