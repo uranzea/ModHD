@@ -2,6 +2,7 @@
 from pathlib import Path
 import pandas as pd
 import numpy as np
+import sys
 
 # Ensure the package is importable when running this script directly
 ROOT = Path(__file__).resolve().parents[1]
@@ -39,7 +40,7 @@ print(sim.head())
 
 # 5) Calibración con datos observados
 try:
-    df_q = pd.read_csv(DATA_DIR / "example_discharge.csv", parse_dates=["date"], index_col="date")
+    df_q = pd.read_csv(data_dir / "example_discharge.csv", parse_dates=["date"], index_col="date")
     q_obs = df_q.reindex(sim.index)["Qobs_m3s"].values
 except FileNotFoundError:
     q_obs = sim["Q_m3s"].values * (1 + np.random.normal(0, 0.1, size=len(sim)))
