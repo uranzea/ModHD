@@ -50,6 +50,9 @@ Edita parámetros en `example_run.py` o calibra con `calibration.random_search()
 Ajusta `a`/`b` según calibración local y literatura específica para tu altitud y zona. Si tienes la referencia oficial que usas en EPM, indícala y actualizo la fórmula exacta.
 
 ## GUI
+La interfaz requiere [Tkinter](https://docs.python.org/3/library/tkinter.html), que no se instala vía `pip`.
+Instálalo con el gestor de paquetes de tu sistema (p. ej. `sudo apt-get install python3-tk` en Debian/Ubuntu).
+
 Ejecuta:
 ```bash
 python scripts/gui_app.py
