@@ -8,6 +8,7 @@ dependencies:
   - pandas
   - matplotlib
   - notebook
+  - ipywidgets
   - tk
   - pip
   - pip:
