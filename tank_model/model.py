@@ -39,7 +39,17 @@ class TankModel:
         # Exceso sobre capacidad S0
         excess = max(0.0, S0 - p.S0_max)
         Qs += excess
-        S0 = S0 - Qs - I
+
+        # Verificar si hay agua suficiente en S0 para Qs + I
+        total_out = Qs + I
+        if total_out > S0:
+            factor = S0 / total_out if total_out > 0 else 0.0
+            Qs *= factor
+            I *= factor
+            S0 = 0.0
+        else:
+            S0 = S0 - total_out
+
         S0 = max(0.0, S0)
 
         # Tanque S1 (no saturado)
