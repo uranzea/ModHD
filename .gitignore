@@ -1,0 +1,8 @@
+# Ignore Python compiled files and metadata
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+# Ignore OS files
+.DS_Store

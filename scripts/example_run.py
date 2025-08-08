@@ -1,17 +1,22 @@
 
 from pathlib import Path
-
 import pandas as pd
 import numpy as np
+
+# Ensure the package is importable when running this script directly
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.append(str(ROOT))
+
 from tank_model import TankModel, ModelConfig
 from tank_model.parameters import Parameters
 from tank_model.calibration import random_search
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-
-# 1) Carga forcing (usa ejemplo si existe, o genera sintético)
+# 1) Carga forcing (ejemplo sintético diario 1 año)
+data_dir = ROOT / "data"
+forcing_path = data_dir / "example_forcing.csv"
 try:
-    df = pd.read_csv(DATA_DIR / "example_forcing.csv", parse_dates=["date"], index_col="date")
+    df = pd.read_csv(forcing_path, parse_dates=["date"], index_col="date")
+
 except FileNotFoundError:
     idx = pd.date_range("2020-01-01", periods=365, freq="D")
     rng = np.random.default_rng(123)
@@ -45,6 +50,9 @@ print("Parámetros calibrados:", best_p)
 # 6) Re-simular con parámetros calibrados
 m2 = make_model(best_p)
 sim2 = m2.run(df)
-out_file = DATA_DIR / "simulation_output.csv"
-sim2.to_csv(out_file)
-print(f"Guardado: {out_file}")
+
+output_path = data_dir / "simulation_output.csv"
+output_path.parent.mkdir(parents=True, exist_ok=True)
+sim2.to_csv(output_path)
+print(f"Guardado: {output_path}")
+
