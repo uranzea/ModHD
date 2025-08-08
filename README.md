@@ -14,6 +14,23 @@ Nuevas funcionalidades:
 - Interfaz gráfica (`scripts/gui_app.py`) basada en Tkinter/Matplotlib *(requiere `python3-tk`)*.
 - Ejemplo de uso reproducible y calibración en `scripts/example_run.py`.
 
+## Instalación
+
+### Entorno Conda
+
+Para crear y activar un entorno conda con las dependencias:
+
+```bash
+conda env create -f environment.yml
+conda activate tank_model
+```
+
+Opcionalmente, instala el paquete en modo editable:
+
+```bash
+pip install -e .
+```
+
 ## Estructura
 ```
 tank_model/
