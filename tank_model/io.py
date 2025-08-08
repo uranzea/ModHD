@@ -1,6 +1,7 @@
 
 """Utilidades de entrada/salida y pre-proceso."""
 import pandas as pd
+import numpy as np
 
 def load_csv(path, date_col="date", tz=None):
     df = pd.read_csv(path, parse_dates=[date_col])
@@ -35,3 +36,34 @@ def tag_hydrology(df, col="P_mm", dry_q=0.25, wet_q=0.75, min_days=5):
     regime[roll >= q3] = 1
     mapping = {-1:"dry", 0:"normal", 1:"wet"}
     return regime.map(mapping)
+
+
+def ensure_pet_coverage(df, pet_series):
+    """Asegura que ``df`` tenga ``PET_mm`` para todas las fechas.
+
+    Si faltan valores en ``df['PET_mm']`` o la columna no existe, se
+    rellena repitiendo cíclicamente ``pet_series``.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame de forzantes a verificar.
+    pet_series : pandas.Series
+        Serie de PET empleada en la calibración.
+
+    Returns
+    -------
+    pandas.DataFrame
+        DataFrame con ``PET_mm`` completo.
+    """
+    df = df.copy()
+    need_fill = "PET_mm" not in df.columns or df["PET_mm"].isna().any()
+    if need_fill:
+        n = len(df)
+        repeated = np.resize(pet_series.values, n)
+        new_pet = pd.Series(repeated, index=df.index)
+        if "PET_mm" in df.columns:
+            df["PET_mm"] = df["PET_mm"].fillna(new_pet)
+        else:
+            df["PET_mm"] = new_pet
+    return df
