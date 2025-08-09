@@ -76,8 +76,9 @@ calib_df = pd.DataFrame(
 # Gráfica de series de tiempo
 fig, ax1 = plt.subplots(figsize=(10, 5))
 
-calib_df["Q_sim_m3s"].plot(ax1, color="red", label="Simulado")
-calib_df["Q_obs_m3s"].plot(ax1, color="black", label="Observado")
+# Graficar caudal simulado (rojo) y observado (negro) en el eje principal
+calib_df["Q_sim_m3s"].plot(ax=ax1, color="red", label="Simulado")
+calib_df["Q_obs_m3s"].plot(ax=ax1, color="black", label="Observado")
 
 ax1.set_ylabel("Q (m³/s)")
 ax2 = ax1.twinx()
@@ -105,6 +106,23 @@ fig_fdc.tight_layout()
 fdc_path = data_dir / "calibration_fdc.png"
 fig_fdc.savefig(fdc_path)
 plt.show()
+
+# Crear las figuras con Matplotlib
+fig, ax1 = plt.subplots(figsize=(9, 3))
+
+# Crear un segundo eje para la lluvia (barra azul)
+ax2 = ax1.twinx()
+calib_df["P_mm"].plot(kind="bar", ax=ax2, color="blue", alpha=0.3, width=1.0, label="Precipitación")
+
+# Etiquetas y leyenda
+ax1.set_ylabel("Caudal (m³/s)")
+ax2.set_ylabel("Precipitación (mm)")
+ax1.set_title("Comparación caudal simulado vs observado con precipitación")
+ax1.legend(loc="upper left")
+ax2.legend(loc="upper right")
+
+plt.show()
+
 
 output_path = data_dir / "simulation_output.csv"
 output_path.parent.mkdir(parents=True, exist_ok=True)
