@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 import sys
+import matplotlib.pyplot as plt
 
 # Ensure the package is importable when running this script directly
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,6 +62,47 @@ print("Parámetros calibrados:", best_p)
 # 6) Re-simular con parámetros calibrados
 m2 = make_model(best_p)
 sim2 = m2.run(df)
+
+# Combinar series simuladas, observadas y precipitación
+calib_df = pd.DataFrame(
+    {
+        "Q_sim_m3s": sim2["Q_m3s"],
+        "Q_obs_m3s": q_obs,
+        "P_mm": df["P_mm"],
+    },
+    index=sim2.index,
+)
+
+# Gráfica de series de tiempo
+fig, ax1 = plt.subplots(figsize=(10, 5))
+calib_df["Q_sim_m3s"].plot(ax1, color="red", label="Simulado")
+calib_df["Q_obs_m3s"].plot(ax1, color="black", label="Observado")
+ax1.set_ylabel("Q (m³/s)")
+ax2 = ax1.twinx()
+ax2.bar(calib_df.index, calib_df["P_mm"], color="blue", alpha=0.3, label="P")
+ax2.set_ylabel("P (mm)")
+ax1.legend(loc="upper left")
+ax2.legend(loc="upper right")
+fig.tight_layout()
+ts_path = data_dir / "calibration_timeseries.png"
+fig.savefig(ts_path)
+plt.show()
+
+# Curva de duración de caudales (FDC)
+q_sim_sorted = np.sort(calib_df["Q_sim_m3s"].values)[::-1]
+q_obs_sorted = np.sort(calib_df["Q_obs_m3s"].values)[::-1]
+exceed_prob = np.arange(1, len(q_sim_sorted) + 1) / (len(q_sim_sorted) + 1)
+
+fig_fdc, ax_fdc = plt.subplots(figsize=(8, 5))
+ax_fdc.plot(exceed_prob, q_sim_sorted, label="Simulado", color="red")
+ax_fdc.plot(exceed_prob, q_obs_sorted, label="Observado", color="black")
+ax_fdc.set_xlabel("Probabilidad de excedencia")
+ax_fdc.set_ylabel("Q (m³/s)")
+ax_fdc.legend()
+fig_fdc.tight_layout()
+fdc_path = data_dir / "calibration_fdc.png"
+fig_fdc.savefig(fdc_path)
+plt.show()
 
 output_path = data_dir / "simulation_output.csv"
 output_path.parent.mkdir(parents=True, exist_ok=True)
