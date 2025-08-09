@@ -1,5 +1,4 @@
-Fecha,Afluente SN,a,b,c,d,Temperatura °C,CAUDAL OBSERVADO,CAUDAL SIMULADO m3/s,Precip Media (mm),Evaporación Potencial
-Fecha,,,,,simulado, (mm),
+Fecha,Afluente_SN,a,b,Temp_C,Qobs_m3s,P_mm,PET_mm
 1950/01/1,0.8,,,18.46,2.193,0.800,3.252
 1950/01/2,0,,,18.46,1.108,0.000,3.252
 1950/01/3,0,,,18.46,1.086,0.000,3.252
