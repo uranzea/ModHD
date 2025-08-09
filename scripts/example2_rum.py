@@ -75,8 +75,10 @@ calib_df = pd.DataFrame(
 
 # Gráfica de series de tiempo
 fig, ax1 = plt.subplots(figsize=(10, 5))
-calib_df["Q_sim_m3s"].plot(ax=ax1, color="red", label="Simulado")
-calib_df["Q_obs_m3s"].plot(ax=ax1, color="black", label="Observado")
+
+calib_df["Q_sim_m3s"].plot(ax1, color="red", label="Simulado")
+calib_df["Q_obs_m3s"].plot(ax1, color="black", label="Observado")
+
 ax1.set_ylabel("Q (m³/s)")
 ax2 = ax1.twinx()
 ax2.bar(calib_df.index, calib_df["P_mm"], color="blue", alpha=0.3, label="P")
