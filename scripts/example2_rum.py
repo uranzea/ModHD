@@ -12,6 +12,8 @@ sys.path.append(str(ROOT))
 from tank_model import TankModel, ModelConfig
 from tank_model.parameters import Parameters
 from tank_model.calibration import random_search
+from tank_model.metrics import plot_error_metrics_heatmap
+
 
 # 1) Carga forcing (ejemplo sintético diario 1 año)
 data_dir = ROOT / "data"
@@ -74,7 +76,7 @@ calib_df = pd.DataFrame(
 )
 
 # Gráfica de series de tiempo
-fig, ax1 = plt.subplots(figsize=(10, 5))
+fig_st, ax1 = plt.subplots(figsize=(10, 5))
 
 # Graficar caudal simulado (rojo) y observado (negro) en el eje principal
 calib_df["Q_sim_m3s"].plot(ax=ax1, color="red", label="Simulado")
@@ -86,14 +88,15 @@ ax2.bar(calib_df.index, calib_df["P_mm"], color="blue", alpha=0.3, label="P")
 ax2.set_ylabel("P (mm)")
 ax1.legend(loc="upper left")
 ax2.legend(loc="upper right")
-fig.tight_layout()
+fig_st.tight_layout()
 ts_path = data_dir / "calibration_timeseries.png"
-fig.savefig(ts_path)
+fig_st.savefig(ts_path)
 plt.show()
 
 # Curva de duración de caudales (FDC)
-q_sim_sorted = np.sort(calib_df["Q_sim_m3s"].values)[::-1]
-q_obs_sorted = np.sort(calib_df["Q_obs_m3s"].values)[::-1]
+
+q_sim_sorted = np.sort(calib_df["Q_sim_m3s"])[::-1]
+q_obs_sorted = np.sort(calib_df["Q_obs_m3s"])[::-1]
 exceed_prob = np.arange(1, len(q_sim_sorted) + 1) / (len(q_sim_sorted) + 1)
 
 fig_fdc, ax_fdc = plt.subplots(figsize=(8, 5))
@@ -120,10 +123,13 @@ ax2.set_ylabel("Precipitación (mm)")
 ax2.legend(loc="upper right")
 
 ax1.set_title("Caudal simulado vs. observado y precipitación")
-plt.tight_layout()
+fig.tight_layout()
+Qfig_path = data_dir / "Qsim vs Qobs vs Pr.png"
+fig.savefig(Qfig_path)
 plt.show()
 
-
+plot_error_metrics_heatmap(calib_df["Q_obs_m3s"], calib_df["Q_sim_m3s"])
+plt.show()
 
 output_path = data_dir / "simulation_output.csv"
 output_path.parent.mkdir(parents=True, exist_ok=True)
