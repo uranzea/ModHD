@@ -4,9 +4,10 @@ import os
 from datetime import datetime
 from .parameters import Parameters
 from .metrics import nse
+from typing import Union, Optional
 
 def random_search(model_factory, df, q_obs, n_iter=200, seed=42, bounds=None,
-                  catchment_name: str | None = None, log_path: str = "calibration_log.csv"):
+                  catchment_name: Optional[str] = None, log_path: str = "calibration_log.csv"):
     """Búsqueda aleatoria simple maximizando NSE.
 
     Args:
@@ -131,7 +132,8 @@ def log_calibration_results(best_params: Parameters, best_score: float, catchmen
         writer.writerow(row)
 
 
-def load_calibration(catchment_name: str, calibration_id: int | str | None = None,
+def load_calibration(catchment_name: str,
+                     calibration_id: Union[int, str, None] = None,
                      log_path: str = "calibration_log.csv") -> Parameters:
     """Carga una calibración previamente registrada en el log y devuelve un objeto Parameters.
 
@@ -228,7 +230,10 @@ def load_calibration(catchment_name: str, calibration_id: int | str | None = Non
     return Parameters(**params_kwargs)
 
 
-def run_with_saved_calibration(model_factory, df, catchment_name: str, calibration_id: int | str | None = None,
+def run_with_saved_calibration(model_factory,
+                               df,
+                               catchment_name: str,
+                               calibration_id: Optional[Union[int, str]] = None,
                                log_path: str = "calibration_log.csv"):
     """Ejecuta el modelo con una calibración previamente guardada.
 

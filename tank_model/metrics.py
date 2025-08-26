@@ -1,8 +1,8 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
 def nse(obs, sim):
+    """Nash-Sutcliffe Efficiency"""
     obs = np.asarray(obs, dtype=float)
     sim = np.asarray(sim, dtype=float)
     m = np.nanmean(obs)
@@ -11,6 +11,7 @@ def nse(obs, sim):
     return 1 - num/den if den > 0 else np.nan
 
 def kge(obs, sim):
+    """Kling-Gupta Efficiency"""
     obs = np.asarray(obs, dtype=float)
     sim = np.asarray(sim, dtype=float)
     r = np.corrcoef(obs, sim)[0,1]
@@ -19,10 +20,43 @@ def kge(obs, sim):
     return 1 - np.sqrt((r-1)**2 + (alpha-1)**2 + (beta-1)**2)
 
 def bias_pct(obs, sim):
+    """Percentage Bias"""
     obs = np.asarray(obs, dtype=float)
     sim = np.asarray(sim, dtype=float)
     return 100.0 * (np.nansum(sim) - np.nansum(obs)) / np.nansum(obs)
 
+def rmse(obs, sim):
+    """Root Mean Square Error"""
+    obs = np.asarray(obs, dtype=float)
+    sim = np.asarray(sim, dtype=float)
+    valid_mask = ~(np.isnan(obs) | np.isnan(sim))
+    if np.sum(valid_mask) == 0:
+        return np.nan
+    return np.sqrt(np.mean((obs[valid_mask] - sim[valid_mask])**2))
+
+def mae(obs, sim):
+    """Mean Absolute Error"""
+    obs = np.asarray(obs, dtype=float)
+    sim = np.asarray(sim, dtype=float)
+    valid_mask = ~(np.isnan(obs) | np.isnan(sim))
+    if np.sum(valid_mask) == 0:
+        return np.nan
+    return np.mean(np.abs(obs[valid_mask] - sim[valid_mask]))
+
+def r_squared(obs, sim):
+    """Coefficient of Determination (R²)"""
+    obs = np.asarray(obs, dtype=float)
+    sim = np.asarray(sim, dtype=float)
+    valid_mask = ~(np.isnan(obs) | np.isnan(sim))
+    if np.sum(valid_mask) < 2:
+        return np.nan
+    
+    obs_valid = obs[valid_mask]
+    sim_valid = sim[valid_mask]
+    
+    correlation_matrix = np.corrcoef(obs_valid, sim_valid)
+    correlation = correlation_matrix[0,1]
+    return correlation**2
 
 def plot_error_metrics_heatmap(obs, sim, ax=None, cmap="viridis"):
     """Plot a heatmap with common error metrics.
@@ -57,6 +91,9 @@ def plot_error_metrics_heatmap(obs, sim, ax=None, cmap="viridis"):
         "NSE": nse,
         "KGE": kge,
         "Bias%": bias_pct,
+        "RMSE": rmse,
+        "MAE": mae,
+        "R²": r_squared,
     }
     labels = list(metric_funcs)
     values = [metric_funcs[name](obs, sim) for name in labels]
