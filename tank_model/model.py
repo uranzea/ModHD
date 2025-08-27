@@ -5,12 +5,16 @@ import pandas as pd
 from .parameters import Parameters
 from .states import States
 from .routing import nash_cascade
+from typing import Union, Optional
+from pathlib import Path
 
 @dataclass
 class ModelConfig:
     area_km2: float            # para conversión a m3/s
     dt_hours: float = 24.0     # 1 día por defecto
     route: bool = True         # aplicar Nash en la salida
+    debug_balance: bool = False
+    debug_csv_path: Optional[str] = None
 
     def __post_init__(self):
         if self.area_km2 == 1.0:
@@ -122,4 +126,104 @@ class TankModel:
         else:
             out["Qout_mm"] = out["Qin"].values
             out["Q_m3s"] = np.nan
+
+        # === DIAGNÓSTICO DE BALANCE HÍDRICO (opcional) ================================
+        # Ubicar esto al final de TankModel.run(), antes de "return out"
+        # Requiere que existan en "out" las columnas: "Qout_mm" y (si hay) "S0","S1","S2","S3".
+        # El DataFrame de entrada "df" debe tener "P_mm" y "PET_mm".
+
+        # 1) parámetros de depuración (desde config o argumentos)
+        debug = getattr(self.c, "debug_balance", False)
+        debug_csv_path = getattr(self.c, "debug_csv_path", None)
+        # Si prefieres llamar run(df, debug=False, debug_csv_path=None), descomenta esto:
+        # debug = debug or locals().get("debug", False)
+        # debug_csv_path = debug_csv_path or locals().get("debug_csv_path", None)
+
+        if debug:
+
+            # 2) armar tabla de diagnóstico con lo que exista
+            diag_cols = {}
+
+            # Forzantes principales (si están en df)
+            if "P_mm" in df.columns:
+                diag_cols["P_mm"] = df["P_mm"].astype(float)
+            if "PET_mm" in df.columns:
+                diag_cols["PET_mm"] = df["PET_mm"].astype(float)
+
+            # Salidas del modelo (en mm/∆t) y estados
+            if "Qout_mm" in out.columns:
+                diag_cols["Q_mm"] = out["Qout_mm"].astype(float)
+
+            for s in ("S0","S1","S2","S3"):
+                if s in out.columns:
+                    diag_cols[s] = out[s].astype(float)
+
+            # Componentes internos si existen (nombres opcionales/configurables)
+            # Agrega aquí los nombres que use tu modelo para particiones:
+            optional_terms = [
+                "Qf_mm","Qb_mm","Qs_mm",       # flujos rápido, base, superficial
+                "Infiltration_mm","Perc_mm",   # infiltración, percolación
+                "ET_mm","ET0_mm","ET1_mm"      # evapotranspiración efectiva/por tanque
+            ]
+            for col in optional_terms:
+                if col in out.columns:
+                    diag_cols[col] = out[col].astype(float)
+
+            diag = pd.DataFrame(diag_cols, index=out.index)
+
+            # 3) cierre instantáneo y acumulado
+            # Estados totales (si existen)
+            stor_cols = [c for c in ("S0","S1","S2","S3") if c in diag.columns]
+            S_total = diag[stor_cols].sum(axis=1) if stor_cols else pd.Series(0.0, index=diag.index)
+
+            P   = diag.get("P_mm",  pd.Series(0.0, index=diag.index))
+            PET = diag.get("PET_mm",pd.Series(0.0, index=diag.index))
+            Q   = diag.get("Q_mm",  pd.Series(0.0, index=diag.index))
+
+            # Cierre simple: P - PET - Q - ΔS
+            dS   = S_total.diff().fillna(0.0)
+            close_step = P - PET - Q - dS
+            close_cum  = close_step.cumsum()
+
+            diag["S_total_mm"]   = S_total
+            diag["dS_mm"]        = dS
+            diag["resid_step_mm"] = close_step
+            diag["resid_cum_mm"]  = close_cum
+
+            # 4) imprimir resumen
+            sumP   = float(np.nansum(P.values))
+            sumPET = float(np.nansum(PET.values))
+            sumQ   = float(np.nansum(Q.values))
+            dS_tot = float((S_total.iloc[-1] - S_total.iloc[0])) if len(S_total) else 0.0
+            resid  = sumP - sumPET - sumQ - dS_tot
+
+            print("\n=== DIAGNÓSTICO DE BALANCE (run) ===")
+            print(f"ΣP     = {sumP:12.2f} mm")
+            print(f"ΣPET   = {sumPET:12.2f} mm")
+            print(f"ΣQsim  = {sumQ:12.2f} mm")
+            if len(S_total):
+                print(f"ΔS     = {dS_tot:12.2f} mm (Sini={float(S_total.iloc[0]):.2f} → Sfin={float(S_total.iloc[-1]):.2f})")
+            else:
+                print("ΔS     =     N/A (no hay columnas S0..S3 en la salida)")
+            print(f"Residuo= {resid:12.2f} mm  (ideal ≈ 0)")
+
+            # 5) (opcional) desgloses que existan
+            for name in ("Qs_mm","Qf_mm","Qb_mm","ET_mm","Infiltration_mm","Perc_mm"):
+                if name in diag.columns:
+                    print(f"Σ{name:<16}= {float(np.nansum(diag[name].values)):12.2f} mm")
+
+            # 6) guardar CSV de diagnóstico (opcional)
+            if debug_csv_path:
+                try:
+                    Path(debug_csv_path).parent.mkdir(parents=True, exist_ok=True)
+                    diag.to_csv(debug_csv_path, index=True)
+                    print(f"[Debug] Diagnóstico de balance guardado en: {debug_csv_path}")
+                except Exception as e:
+                    print(f"[Debug] No se pudo guardar diagnóstico en {debug_csv_path}: {e}")
+
+            # 7) opcional: anexar al DataFrame de salida para inspección externa
+            # (descomenta si quieres devolver estas columnas)
+            out["S_total_mm"]    = diag["S_total_mm"]
+            out["resid_step_mm"] = diag["resid_step_mm"]
+            out["resid_cum_mm"]  = diag["resid_cum_mm"]
         return out

@@ -3,7 +3,7 @@ import numpy as np
 import os
 from datetime import datetime
 from .parameters import Parameters
-from .metrics import nse
+from .metrics import kge, nse
 from typing import Union, Optional
 
 def random_search(model_factory, df, q_obs, n_iter=200, seed=42, bounds=None,
@@ -25,20 +25,34 @@ def random_search(model_factory, df, q_obs, n_iter=200, seed=42, bounds=None,
     """
     rng = np.random.default_rng(seed)
     if bounds is None:
+        # bounds = {
+        #     "k_qs": (0.01, 0.5),
+        #     "alpha": (1.0, 2.5),
+        #     "S0_max": (5, 150),
+        #     "k_inf": (0.01, 0.5),
+        #     "k_perc": (0.005, 0.2),
+        #     "beta": (0.8, 1.5),
+        #     "phi": (0.2, 0.9),
+        #     "k_qf": (0.05, 0.8),
+        #     "k_bf": (0.001, 0.2),
+        #     "n_r": (1, 4),
+        #     "k_r": (1.0, 72.0),
+        #     "f_et0": (0.0, 0.2),
+        #     "f_et1": (0.0, 0.1),
+        # }
         bounds = {
-            "k_qs": (0.01, 0.5),
-            "alpha": (1.0, 2.5),
-            "S0_max": (5, 150),
-            "k_inf": (0.01, 0.5),
-            "k_perc": (0.005, 0.2),
-            "beta": (0.8, 1.5),
-            "phi": (0.2, 0.9),
-            "k_qf": (0.05, 0.8),
-            "k_bf": (0.001, 0.2),
-            "n_r": (1, 4),
-            "k_r": (1.0, 72.0),
-            "f_et0": (0.0, 0.2),
-            "f_et1": (0.0, 0.1),
+            "S0_max": (25, 80),
+            "alpha":  (1.30, 2.00),
+            "k_qs":   (0.12, 0.30),
+            "k_inf":  (0.15, 0.35),
+            "k_perc": (0.03, 0.10),
+            "phi":    (0.55, 0.80),
+            "k_qf":   (0.15, 0.35),
+            "k_bf":   (0.04, 0.15),
+            "f_et0":  (0.08, 0.16),
+            "f_et1":  (0.03, 0.08),
+            "n_r":    (1, 2),
+            "k_r":    (6.0, 18.0),  # horas
         }
     best_score = -np.inf
     best_p = None
@@ -54,7 +68,18 @@ def random_search(model_factory, df, q_obs, n_iter=200, seed=42, bounds=None,
                 setattr(p, k, rng.uniform(lo, hi))
         m = model_factory(p)
         sim = m.run(df)["Q_m3s"].values
-        score = nse(q_obs, sim)
+        # score = kge(q_obs, sim)
+
+        # dentro del loop de calibración
+        q_sim = sim["Q_m3s"].values
+        nse_lin = nse(q_obs, q_sim)
+        nse_log = nse(np.log1p(q_obs), np.log1p(q_sim))  # sensibilidad a bajos-medios
+        # error de picos (top 1% observado)
+        thr = np.nanpercentile(q_obs, 99)
+        peak_bias = (np.nansum(q_sim[q_obs>=thr]) - np.nansum(q_obs[q_obs>=thr])) / (np.nansum(q_obs[q_obs>=thr]) + 1e-9)
+        peak_score = -abs(peak_bias)  # 0 es perfecto, penaliza desbalance de picos
+        score = 0.45*nse_lin + 0.35*nse_log + 0.20*peak_score
+
         if np.isfinite(score) and score > best_score:
             best_score = score
             best_p = p
@@ -70,14 +95,14 @@ def random_search(model_factory, df, q_obs, n_iter=200, seed=42, bounds=None,
 
 def log_calibration_results(best_params: Parameters, best_score: float, catchment_name: str,
                              log_path: str = "calibration_log.csv") -> None:
-    """Guarda en un registro los parámetros calibrados y el NSE obtenido.
+    """Guarda en un registro los parámetros calibrados y el KGE obtenido.
 
     Cada llamada añade una línea al archivo `log_path`. Se incluye la fecha y hora
     (en formato ISO 8601), el nombre de la cuenca y todos los parámetros del modelo.
 
     Args:
         best_params: instancia de Parameters con los valores calibrados.
-        best_score: valor de NSE u otra métrica a registrar.
+        best_score: valor de KGE u otra métrica a registrar.
         catchment_name: identificador de la cuenca o estación para diferenciar el registro.
         log_path: ruta del archivo CSV de log. Si no existe, se crea con encabezados.
     """

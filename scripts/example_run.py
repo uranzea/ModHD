@@ -41,7 +41,10 @@ try:
 except FileNotFoundError:
     print("Observaciones no encontradas, generando sintéticas...")
     # Configuración temporal del modelo
-    cfg = ModelConfig(dt_hours=24.0, area_km2=0.173, route=True)
+    cfg = ModelConfig(dt_hours=24.0, area_km2=40.0,
+                  route=True,
+                  debug_balance=True,
+                  debug_csv_path="data/diag_balance_run.csv")
     params = Parameters()
     m_tmp = TankModel(params=params, config=cfg)
     sim_tmp = m_tmp.run(df)
@@ -72,7 +75,7 @@ print(f"Período validación: {len(df_valid)} días ({df_valid.index[0]} a {df_v
 # ==============================
 # 4) Configuración del modelo y función factory
 # ==============================
-cfg = ModelConfig(dt_hours=24.0, area_km2=0.173, route=True)
+cfg = ModelConfig(dt_hours=24.0, area_km2=1.1, route=True)
 params_initial = Parameters()
 
 def make_model(p):
