@@ -225,6 +225,7 @@ results = pd.DataFrame({
     "Q_sim_mm":  sim_full["Qout_mm"].astype(float),
     "P_mm":      df["P_mm"].astype(float),
     "PET_mm":    df["PET_mm"].astype(float),
+    "ET_mm":     sim_full["ET_mm"].astype(float),
     "Q_obs_m3s": df["Qobs_m3s"].astype(float)
 }, index=df.index)
 
@@ -261,10 +262,12 @@ print("\n=== BALANCE HÍDRICO (mm por ∆t) ===")
 # Usamos Q_sim_mm (ya en mm/∆t). Comparamos totales.
 sum_P   = float(np.nansum(results["P_mm"].values))
 sum_PET = float(np.nansum(results["PET_mm"].values))
+sum_ET  = float(np.nansum(results["ET_mm"].values))
 sum_Qmm = float(np.nansum(results["Q_sim_mm"].values))
 
 print(f"ΣP =   {sum_P:10.2f} mm")
 print(f"ΣPET = {sum_PET:10.2f} mm")
+print(f"ΣET =  {sum_ET:10.2f} mm")
 print(f"ΣQsim = {sum_Qmm:10.2f} mm")
 
 # Estimación de almacenamiento (si están en la salida)
@@ -278,9 +281,9 @@ else:
     dS = np.nan
     print("No se encontraron columnas de almacenamiento (S0..S3) en la salida para cierre de balance.")
 
-# Cierre simple del balance (aprox): P - PET - Q - ΔS
-resid = sum_P - sum_PET - sum_Qmm - (dS if np.isfinite(dS) else 0.0)
-print(f"Residuo (P - PET - Q - ΔS) = {resid:.2f} mm  → (ideal ≈ 0, diferencias por discretización/redondeo)")
+# Cierre simple del balance (aprox): P - ET - Q - ΔS
+resid = sum_P - sum_ET - sum_Qmm - (dS if np.isfinite(dS) else 0.0)
+print(f"Residuo (P - ET - Q - ΔS) = {resid:.2f} mm  → (ideal ≈ 0, diferencias por discretización/redondeo)")
 
 # Chequeo de unidades: reconstruir Q_sim_m3s desde mm/∆t y comparar con Q_sim_m3s reportado
 q_m3s_rebuild = results["Q_sim_mm"].values * (area_m2 * 1e-3) / (dt_hours * 3600.0)
@@ -317,6 +320,8 @@ for label, arr in pairs:
 out_csv = data_dir / "desk_check_results.csv"
 results.to_csv(out_csv)
 print(f"\nResultados de simulación guardados en: {out_csv}")
+sum_ET_cal = float(np.nansum(results["ET_mm"].iloc[:split_idx].values))
+sum_ET_val = float(np.nansum(results["ET_mm"].iloc[split_idx:].values))
 
 summary = pd.DataFrame({
     "subset": ["Calibration", "Validation", "Global"],
@@ -326,6 +331,7 @@ summary = pd.DataFrame({
     "BIAS_%": [bias_cal, bias_val, bias_glb],
     "sumP_mm": [float(np.nansum(df_calib['P_mm'])), float(np.nansum(df_valid['P_mm'])), sum_P],
     "sumPET_mm": [float(np.nansum(df_calib['PET_mm'])), float(np.nansum(df_valid['PET_mm'])), sum_PET],
+    "sumET_mm": [sum_ET_cal, sum_ET_val, sum_ET],
 })
 sum_path = data_dir / "desk_check_metrics_summary.csv"
 summary.to_csv(sum_path, index=False)
