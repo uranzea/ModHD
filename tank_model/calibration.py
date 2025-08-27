@@ -67,11 +67,10 @@ def random_search(model_factory, df, q_obs, n_iter=200, seed=42, bounds=None,
             else:
                 setattr(p, k, rng.uniform(lo, hi))
         m = model_factory(p)
-        sim = m.run(df)["Q_m3s"].values
-        # score = kge(q_obs, sim)
+        sim_df = m.run(df)
+        q_sim = sim_df["Q_m3s"].values
+        # score = kge(q_obs, q_sim)
 
-        # dentro del loop de calibración
-        q_sim = sim["Q_m3s"].values
         nse_lin = nse(q_obs, q_sim)
         nse_log = nse(np.log1p(q_obs), np.log1p(q_sim))  # sensibilidad a bajos-medios
         # error de picos (top 1% observado)
