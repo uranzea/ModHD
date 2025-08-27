@@ -31,5 +31,5 @@ def test_mass_conservation_when_s0_insufficient():
 
     res = model.step(P=0.0, PET=0.0)
 
-    assert np.isclose(res["Qs"] + res["I"], 10.0)
+    assert np.isclose(res["Qs_mm"] + res["I_mm"], 10.0)
     assert res["S0"] == 0.0
