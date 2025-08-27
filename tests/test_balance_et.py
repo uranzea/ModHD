@@ -36,7 +36,7 @@ def test_balance_et_closure():
     out = model.run(df)
 
     # Expected ET and Q
-    assert np.allclose(out["ET"].values, [4.0, 4.0, 4.0])
+    assert np.allclose(out["ET_mm"].values, [4.0, 4.0, 4.0])
     assert np.allclose(out["Qout_mm"].values, 0.0)
 
     # Residual of cumulative balance should be ~0
@@ -44,7 +44,7 @@ def test_balance_et_closure():
 
     # Summation checks for mass balance closure
     sumP = df["P_mm"].sum()
-    sumET = out["ET"].sum()
+    sumET = out["ET_mm"].sum()
     sumQ = out["Qout_mm"].sum()
     initial_storage = init_states.S0 + init_states.S1 + init_states.S2 + init_states.S3
     final_storage = out[["S0", "S1", "S2", "S3"]].iloc[-1].sum()
