@@ -95,7 +95,8 @@ class TankModel:
         # Caudal total en mm/dt antes de enrutamiento
         Qin = Qs + Qf + Qb
         return {
-            "ET": ET, "I": I, "Perc": Perc, "Qs": Qs, "Qf": Qf, "Qb": Qb,
+            "ET_mm": ET, "I_mm": I, "Perc_mm": Perc,
+            "Qs_mm": Qs, "Qf_mm": Qf, "Qb_mm": Qb,
             "Qin": Qin, "S0": S0, "S1": S1, "S2": S2, "S3": S3
         }
 
@@ -162,7 +163,7 @@ class TankModel:
             # Agrega aquí los nombres que use tu modelo para particiones:
             optional_terms = [
                 "Qf_mm","Qb_mm","Qs_mm",       # flujos rápido, base, superficial
-                "Infiltration_mm","Perc_mm",   # infiltración, percolación
+                "I_mm","Perc_mm",               # infiltración, percolación
                 "ET_mm","ET0_mm","ET1_mm"      # evapotranspiración efectiva/por tanque
             ]
             for col in optional_terms:
@@ -178,11 +179,12 @@ class TankModel:
 
             P   = diag.get("P_mm",  pd.Series(0.0, index=diag.index))
             PET = diag.get("PET_mm",pd.Series(0.0, index=diag.index))
+            ET  = diag.get("ET_mm", pd.Series(0.0, index=diag.index))
             Q   = diag.get("Q_mm",  pd.Series(0.0, index=diag.index))
 
-            # Cierre simple: P - PET - Q - ΔS
+            # Cierre simple: P - ET - Q - ΔS
             dS   = S_total.diff().fillna(0.0)
-            close_step = P - PET - Q - dS
+            close_step = P - ET - Q - dS
             close_cum  = close_step.cumsum()
 
             diag["S_total_mm"]   = S_total
@@ -193,13 +195,15 @@ class TankModel:
             # 4) imprimir resumen
             sumP   = float(np.nansum(P.values))
             sumPET = float(np.nansum(PET.values))
+            sumET  = float(np.nansum(ET.values))
             sumQ   = float(np.nansum(Q.values))
             dS_tot = float((S_total.iloc[-1] - S_total.iloc[0])) if len(S_total) else 0.0
-            resid  = sumP - sumPET - sumQ - dS_tot
+            resid  = sumP - sumET - sumQ - dS_tot
 
             print("\n=== DIAGNÓSTICO DE BALANCE (run) ===")
             print(f"ΣP     = {sumP:12.2f} mm")
             print(f"ΣPET   = {sumPET:12.2f} mm")
+            print(f"ΣET    = {sumET:12.2f} mm")
             print(f"ΣQsim  = {sumQ:12.2f} mm")
             if len(S_total):
                 print(f"ΔS     = {dS_tot:12.2f} mm (Sini={float(S_total.iloc[0]):.2f} → Sfin={float(S_total.iloc[-1]):.2f})")
@@ -208,7 +212,7 @@ class TankModel:
             print(f"Residuo= {resid:12.2f} mm  (ideal ≈ 0)")
 
             # 5) (opcional) desgloses que existan
-            for name in ("Qs_mm","Qf_mm","Qb_mm","ET_mm","Infiltration_mm","Perc_mm"):
+            for name in ("Qs_mm","Qf_mm","Qb_mm","ET_mm","I_mm","Perc_mm"):
                 if name in diag.columns:
                     print(f"Σ{name:<16}= {float(np.nansum(diag[name].values)):12.2f} mm")
 
