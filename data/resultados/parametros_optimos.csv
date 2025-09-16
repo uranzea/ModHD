@@ -1,0 +1,14 @@
+Parametro,Valor,Unidad
+S0_max,100.168656633604,mm
+alpha,1.0,-
+beta,1.0,-
+k_qs,0.15,/dt
+k_inf,0.17264722328841672,/dt
+k_perc,0.01,/dt
+phi,0.31623146946432884,-
+k_qf,0.15,/dt
+k_bf,0.01,/dt
+f_et0,0.12,/dt
+f_et1,0.05,/dt
+n_r,2.0,-
+k_r,60.0,h

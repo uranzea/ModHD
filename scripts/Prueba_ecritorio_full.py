@@ -2,9 +2,8 @@ from pathlib import Path
 import sys
 import numpy as np
 import pandas as pd
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from scipy.optimize import minimize
 
 # Configuración de rutas para importar el paquete local
 ROOT = Path(__file__).resolve().parents[1]
@@ -108,6 +107,43 @@ print("Mejor puntuación de búsqueda aleatoria:", best_score)
 print("Parámetros calibrados:", best_params)
 
 # ======================================================
+# 5b) Optimización determinística con SciPy
+# ======================================================
+param_names = [
+    "S0_max", "alpha", "k_qs", "k_inf", "k_perc",
+    "phi", "k_qf", "k_bf", "f_et0", "f_et1", "k_r"
+]
+x0 = np.array([getattr(best_params, name) for name in param_names])
+bounds_opt = [bounds[name] for name in param_names]
+
+error_history = []
+
+def objective(x):
+    p = Parameters()
+    p.n_r = best_params.n_r
+    for name, val in zip(param_names, x):
+        setattr(p, name, val)
+    model = TankModel(params=p, config=cfg)
+    q_sim = model.run(df_calib)["Qout_mm"].values
+    return 1.0 - nse(q_obs_calib, q_sim)
+
+error_history.append(objective(x0))
+
+def callback(xk):
+    error_history.append(objective(xk))
+
+res = minimize(objective, x0, method="L-BFGS-B", bounds=bounds_opt, callback=callback)
+
+best_params_opt = Parameters()
+best_params_opt.n_r = best_params.n_r
+for name, val in zip(param_names, res.x):
+    setattr(best_params_opt, name, val)
+
+best_params = best_params_opt
+print("Error final (1 - NSE) SciPy:", res.fun)
+print("Parámetros optimizados SciPy:", best_params)
+
+# ======================================================
 # 6) Simulación completa con parámetros calibrados
 # ======================================================
 model_final = TankModel(params=best_params, config=cfg)
@@ -184,6 +220,15 @@ fig_fdc.tight_layout()
 (fig_fdc_path := data_dir / "prueba_fdc.png")
 fig_fdc.savefig(fig_fdc_path)
 
+fig_err, ax_err = plt.subplots(figsize=(6,4))
+ax_err.plot(error_history, marker="o")
+ax_err.set_xlabel("Iteración")
+ax_err.set_ylabel("1 - NSE")
+ax_err.set_title("Evolución del error")
+fig_err.tight_layout()
+(fig_err_path := data_dir / "prueba_error_evolucion.png")
+fig_err.savefig(fig_err_path)
+
 plot_error_metrics_heatmap(results_df["Q_obs_m3s"], results_df["Q_sim_m3s"])
 (fig_heatmap_path := data_dir / "prueba_heatmap.png")
 plt.savefig(fig_heatmap_path)
@@ -197,7 +242,7 @@ final_storage = sim_complete[["S0", "S1", "S2", "S3"]].iloc[-1].sum()
 
 a = df["P_mm"].sum()
 b = sim_complete["ET_mm"].sum()
-c = sim_complete["Qout_mm"].sum()
+c = sim_complete["Qraw_mm"].sum()
 residual = a - b - c - (final_storage - initial_storage)
 print("Residual de balance hídrico:", residual)
 assert np.isclose(residual, 0.0, atol=1e-6)
