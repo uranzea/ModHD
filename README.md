@@ -15,18 +15,21 @@ Nuevas funcionalidades:
 - Soporte ampliado de **PET** para conjuntos de datos con temperatura, radiación y métodos empíricos (p. ej. Hamon, Hargreaves).
 - Módulos de calibración (`tank_model/calibration.py`) con búsqueda aleatoria y registro en `logs/`.
 - Utilidades de **IO** (`tank_model/io.py`) para carga, partición y etiquetado de series.
-- Interfaz gráfica (`scripts/gui_app.py`) basada en Tkinter/Matplotlib *(requiere `python3-tk`)*.
-- Ejemplo de uso reproducible y calibración en `scripts/example_run.py`.
+- Dashboard local (`scripts/launch_dashboard.py`) basado en Tkinter/Matplotlib *(requiere `python3-tk`)*.
+- Flujo reproducible de calibración/validación en `scripts/run_calibration_validation.py`.
+- Diagnóstico operativo de balances y unidades en `scripts/diagnose_calibration_validation.py`.
 
 ## Instalación
 
 ### Entorno Conda
 
-Para crear y activar un entorno conda con las dependencias:
+La ejecución operativa de `ModHD` dentro de `18_centro_control_climatico` se hace con el ambiente estándar `mini-all`.
+
+Para crear o actualizar ese ambiente con las dependencias del proyecto:
 
 ```bash
 conda env create -f environment.yml
-conda activate tank_model
+conda activate mini-all
 ```
 
 Opcionalmente, instala el paquete en modo editable:
@@ -46,9 +49,15 @@ tank_model/
   metrics.py
   calibration.py
 scripts/
-  example_run.py
+  run_calibration_validation.py
+  diagnose_calibration_validation.py
+  launch_dashboard.py
+  launch_gui.py
+  legacy/
 data/
-  example_forcing.csv
+  input/
+    example_forcing.csv
+  output/
 ```
 
 ## Ecuaciones (discretas)
@@ -69,9 +78,9 @@ Enrutamiento: **Nash** con parámetros `n_r` (entero ≥1) y `k_r` (horas o día
 
 ## Uso rápido
 ```bash
-python scripts/example_run.py
+conda run -n mini-all python scripts/run_calibration_validation.py
 ```
-Este script carga los archivos de ejemplo ubicados en `data/`:
+Este script carga los archivos de ejemplo ubicados en `data/input/`:
 
 - `example_forcing.csv`: precipitación y evapotranspiración.
 - `example_discharge.csv`: caudales observados.
@@ -89,10 +98,30 @@ Instálalo con el gestor de paquetes de tu sistema (p. ej. `sudo apt-get install
 
 Ejecuta:
 ```bash
-python scripts/gui_app.py
+conda run -n mini-all python scripts/launch_dashboard.py
 ```
-- Pestañas: (1) Datos & IO, (2) Parámetros, (3) Evapotranspiración, (4) Simulación, (5) Análisis seco/húmedo
-- Gráfico integrado a la derecha que cambia según la pestaña activa.
+- Tabs del dashboard: Resumen, Series, Calibración, Imágenes y Mapa.
+- Incluye selección de series, graficador temporal, tabla de parámetros calibrados, visor dinámico de imágenes y mapa de capas del catálogo.
 
 ## Notebook
 `notebooks/calibracion_y_analisis.ipynb` con flujo reproducible: IO → PET → simulación → análisis seco/húmedo → métricas.
+
+## Scripts
+La carpeta `scripts/` quedó organizada así:
+
+- `run_calibration_validation.py`: flujo principal para simulación, calibración, validación y exportación de resultados.
+- `diagnose_calibration_validation.py`: desk-check detallado para revisar `dt`, unidades, balance hídrico y desempeño.
+- `launch_dashboard.py`: dashboard local para explorar entradas, salidas, parámetros, imágenes y capas.
+- `launch_gui.py`: alias de compatibilidad al dashboard actual.
+- `legacy/`: pruebas, notebooks y variantes históricas conservadas solo como referencia.
+
+La carpeta `data/` quedó separada así:
+
+- `data/input/`: series fuente, ejemplos e insumos manuales.
+- `data/output/`: CSV, diagnósticos y figuras generadas por los scripts activos.
+
+## Estándar del proyecto 18
+
+- Ambiente de ejecución soportado: `mini-all`
+- No usar `tank_model` como ambiente operativo independiente dentro del proyecto 18
+- Las salidas activas deben escribirse en `data/output/`
